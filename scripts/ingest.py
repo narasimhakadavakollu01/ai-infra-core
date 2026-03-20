@@ -17,7 +17,7 @@ def stub_embed(text: str, dim: int = 384) -> list[float]:
         vec.append(round(val, 6))
     norm = sum(x**2 for x in vec) ** 0.5
     return [x / norm for x in vec]  # unit-normalize
-
+s
 
 # --- Chunking ---
 def chunk_text(text: str, chunk_size: int = 512, overlap: int = 50) -> list[str]:
