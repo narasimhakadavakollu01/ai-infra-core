@@ -3,43 +3,43 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
-# Install build dependencies (gcc lanti heavy tools ikkade untayi)
+# Build tools install chestunnam
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# Packages ni local user directory lo install chestunnam
-RUN pip install --no-cache-dir --user -r requirements.txt
+# --prefix=/install vadi specific location lo install chestunnam
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# ---- Stage 2: Runtime (Final Slim Image) ----
+# ---- Stage 2: Runtime ----
 FROM python:3.11-slim AS runtime
 
 WORKDIR /app
 
-# Security: Root user kakunda appuser create chestunnam
+# Non-root user setup
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Builder stage nundi kevalam installed packages matrame copy chestunnam
-COPY --from=builder /root/.local /root/.local
+# Builder nundi packages ni /usr/local loki copy chestunnam (Permission fix!)
+COPY --from=builder /install /usr/local
 
-# App code matrame copy chestunnam
+# App code copy
 COPY app/ app/
 
-# Path and Environment settings
-ENV PATH=/root/.local/bin:$PATH
+# Folder permissions appuser ki icchesthinnam
+RUN chown -R appuser:appuser /app
+
 ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Switching to non-root user for security
+# Switching to appuser
 USER appuser
 
 EXPOSE 8000
 
-# Healthcheck: App run avthundo ledho check chestundi
+# Healthcheck (httpx install ayyi undali requirements.txt lo)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import httpx; r=httpx.get('http://localhost:8000/health'); r.raise_for_status()"
 
-# App start command
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
