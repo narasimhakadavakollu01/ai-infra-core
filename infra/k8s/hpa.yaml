@@ -1,0 +1,40 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-platform-api-hpa
+  namespace: ai-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-platform-api
+  minReplicas: 2      # Traffic thaggina కనీసం 2 pods run avthayi
+  maxReplicas: 10     # Traffic ekkuva ayithe గరిష్టంగా 10 pods varaku velthundi
+  metrics:
+    # 1. CPU based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 5  # CPU 60% dhaatithe kotha pod create avthundi
+    # 2. Memory based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80  # Memory 80% dhaatithe scale avthundi
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0  # Spikes unnapudu ventane scale up avvali
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 15          # Prathi 15 seconds ki 2 pods add cheyocchu
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Traffic thaggaka 5 mins wait chesi scale down cheyali (Flapping prevent chesthundhi)
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
