@@ -1,4 +1,4 @@
-name: Build, Push & Deploy
+namname: Build, Push & Deploy
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # 1. TEST JOB: Code lo bugs unnayo ledho check chesthundhi
+  # 1. TEST JOB: Code quality check
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v --tb=short || echo "No tests found, skipping..."
 
-  # 2. BUILD JOB: Docker image build chesi GitHub Registry (GHCR) ki pampisthundhi
+  # 2. BUILD JOB: Docker image push to GHCR
   build-push:
     name: Build & Push Image
     runs-on: ubuntu-latest
@@ -59,18 +59,12 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-      - name: Run Docker Scout scan
-        uses: docker/scout-action@v1
-        with:
-          command: cves
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
-          exit-code: false
 
-  # 3. DEPLOY JOB (Skipped for now since no AWS keys)
+  # 3. DEPLOY JOB (Disabled for now)
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: build-push
-    if: false # AWS keys lenandhuvalla deenni disable chesam bava
+    if: false 
     steps:
       - run: echo "Skipping deploy as AWS credentials are not set."
